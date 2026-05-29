@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Django OTP Authentication</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #ffffff; --card: #f8fafc;
+      --border: rgba(0,0,0,0.1);
+      --purple: #7c3aed; --purple-light: #a78bfa;
+      --purple-glow: rgba(124,58,237,0.25);
+      --text: #1e293b; --muted: #64748b; --subtle: #e2e8f0;
+    }
+    body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; }
+    .left { flex:1; background:linear-gradient(160deg,#f8fafc 0%,#e2e8f0 100%); border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:center; padding:60px 56px; position:relative; overflow:hidden; }
+    .left::before { content:''; position:absolute; top:-120px; left:-80px; width:500px; height:500px; background:radial-gradient(circle,rgba(124,58,237,0.12) 0%,transparent 65%); pointer-events:none; }
+    .left::after  { content:''; position:absolute; bottom:-80px; right:-60px; width:380px; height:380px; background:radial-gradient(circle,rgba(124,58,237,0.08) 0%,transparent 65%); pointer-events:none; }
+    .badge { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:999px; border:1px solid rgba(124,58,237,0.35); background:rgba(124,58,237,0.1); color:var(--purple-light); font-size:13px; font-weight:600; letter-spacing:0.04em; margin-bottom:40px; width:max-content; }
+    .hero-title { font-family:'Syne',sans-serif; font-size:clamp(42px,5vw,66px); font-weight:800; line-height:1.05; margin-bottom:22px; }
+    .hero-title span { color:var(--purple-light); }
+    .hero-text { color:var(--muted); font-size:16px; line-height:1.8; max-width:76%; }
+    .feature-list { margin-top:52px; display:flex; flex-direction:column; gap:16px; }
+    .feature { display:flex; align-items:center; gap:14px; color:#475569; font-size:15px; font-weight:500; }
+    .feature-icon { width:40px; height:40px; border-radius:12px; background:rgba(124,58,237,0.14); border:1px solid rgba(124,58,237,0.2); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+    .right { width:500px; display:flex; align-items:center; justify-content:center; background:#f1f5f9; padding:28px; }
+    .card { width:100%; background:var(--card); border:1px solid var(--border); border-radius:28px; padding:38px 36px; box-shadow:0 30px 80px rgba(0,0,0,0.5); animation:fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .card h2 { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; margin-bottom:6px; }
+    .card > p { color:var(--muted); font-size:14px; margin-bottom:28px; }
+    .input-group { margin-bottom:18px; }
+    .input-group label { display:block; font-size:13px; font-weight:600; color:#94a3b8; margin-bottom:8px; letter-spacing:0.03em; }
+    .input-group input { width:100%; padding:14px 16px; border-radius:14px; border:1px solid transparent; outline:none; background:var(--subtle); color:#1e293b; font-size:15px; font-family:'Space Grotesk',sans-serif; transition:border-color 0.2s; }
+    .input-group input:focus { border-color:var(--purple); }
+    .input-group input::placeholder { color:#475569; }
+    .btn { width:100%; padding:15px; border:none; border-radius:14px; background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; font-size:15px; font-weight:700; font-family:'Space Grotesk',sans-serif; cursor:pointer; margin-top:10px; letter-spacing:0.03em; position:relative; overflow:hidden; transition:transform 0.15s,box-shadow 0.15s; }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 8px 30px var(--purple-glow); }
+    .btn:active { transform:translateY(0); }
+    .btn.loading { opacity:0.7; pointer-events:none; }
+    .btn.loading::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.1) 50%,transparent 100%); animation:shimmer 1s infinite; }
+    @keyframes shimmer { from{transform:translateX(-100%)} to{transform:translateX(100%)} }
+    .switch { margin-top:20px; text-align:center; color:var(--muted); font-size:13px; }
+    .switch span { color:var(--purple-light); cursor:pointer; font-weight:600; transition:opacity 0.15s; }
+    .switch span:hover { opacity:0.8; }
+    .hidden { display:none !important; }
+    .otp-container { display:flex; justify-content:center; gap:10px; margin:28px 0; }
+    .otp-box { width:52px; height:62px; text-align:center; font-size:26px; font-weight:700; font-family:'Syne',sans-serif; border:1px solid var(--border); border-radius:14px; background:var(--subtle); color:white; outline:none; transition:border-color 0.2s,box-shadow 0.2s,transform 0.15s; caret-color:var(--purple-light); }
+    .otp-box:focus { border-color:var(--purple); box-shadow:0 0 0 3px var(--purple-glow); transform:scale(1.05); }
+    .otp-box.filled { border-color:rgba(124,58,237,0.5); color:var(--purple-light); }
+    .otp-hint { text-align:center; font-size:13px; color:var(--muted); margin-top:-10px; }
+    .dashboard { text-align:center; }
+    .dashboard h1 { font-family:'Syne',sans-serif; font-size:36px; font-weight:800; margin-bottom:8px; }
+    .dashboard > p { color:var(--muted); font-size:14px; margin-bottom:24px; }
+    .avatar { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#4f46e5); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:28px; font-weight:800; margin:0 auto 18px; box-shadow:0 0 30px var(--purple-glow); }
+    .profile { background:var(--subtle); border:1px solid var(--border); padding:20px 24px; border-radius:18px; margin-bottom:22px; text-align:left; }
+    .profile-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .profile-row:last-child { margin-bottom:0; }
+    .profile-label { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; min-width:60px; }
+    .profile-value { font-size:15px; font-weight:600; color:var(--text); }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px rgba(34,197,94,0.6); margin-right:6px; flex-shrink:0; }
+    .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(0); background:#1e293b; border:1px solid var(--border); color:white; padding:13px 22px; border-radius:999px; z-index:9999; font-size:14px; font-weight:500; box-shadow:0 10px 40px rgba(0,0,0,0.5); display:flex; align-items:center; gap:10px; animation:toastIn 0.3s ease; white-space:nowrap; }
+    .toast.success .toast-dot { background:#22c55e; }
+    .toast.error   .toast-dot { background:#ef4444; }
+    .toast.info    .toast-dot { background:var(--purple-light); }
+    .toast-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    @media (max-width:860px) { .left{display:none} .right{width:100%} }
+    @media (max-width:420px) { .right{padding:16px} .card{padding:28px 20px;border-radius:20px} .otp-box{width:44px;height:54px;font-size:22px} }
+  </style>
+</head>
+<body>
+
+<div style="display:flex;width:100%;height:100vh;">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="badge">🔐 Django Authentication</div>
+    <div class="hero-title">Secure <span>OTP</span><br/>Authentication</div>
+    <div class="hero-text">Modern email OTP authentication using Django REST Framework, session cookies, CSRF protection and a seamless two-step login flow.</div>
+    <div class="feature-list">
+      <div class="feature"><div class="feature-icon">📧</div>Email OTP Verification</div>
+      <div class="feature"><div class="feature-icon">🛡️</div>Secure Session Authentication</div>
+      <div class="feature"><div class="feature-icon">⚡</div>OTP Required Every Login</div>
+      <div class="feature"><div class="feature-icon">🔒</div>CSRF Protected APIs</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+
+    <!-- REGISTER -->
+    <div class="card" id="registerView">
+      <h2>Create Account</h2>
+      <p>Register with secure OTP verification</p>
+      <div class="input-group"><label>Username</label><input type="text" id="regUsername" placeholder="Enter Username" autocomplete="off"/></div>
+      <div class="input-group"><label>Email</label><input type="email" id="regEmail" placeholder="Enter Email" autocomplete="off"/></div>
+      <div class="input-group"><label>Password</label><input type="password" id="regPassword" placeholder="Enter Password" autocomplete="off"/></div>
+      <button type="button" class="btn" id="registerBtn">Create Account</button>
+      <div class="switch">Already have an account? <span id="goLogin">Sign In</span></div>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="card hidden" id="loginView">
+      <h2>Welcome Back</h2>
+      <p>Enter your credentials to receive OTP</p>
+      <div class="input-group"><label>Username</label><input type="text" id="loginUsername" placeholder="Your username" autocomplete="off"/></div>
+      <div class="input-group"><label>Password</label><input type="password" id="loginPassword" placeholder="Your password" autocomplete="off"/></div>
+      <button type="button" class="btn" id="loginBtn">Send OTP</button>
+      <div class="switch">New here? <span id="goRegister">Create Account</span></div>
+    </div>
+
+    <!-- OTP -->
+    <div class="card hidden" id="otpView">
+      <h2 id="otpTitle">Verify OTP</h2>
+      <p id="otpText">Enter the 6-digit code sent to your email</p>
+      <div class="otp-container">
+        <input class="otp-box" maxlength="1" id="otp0" inputmode="numeric"/>
+        <input class="otp-box" maxlength="1" id="otp1" inputmode="numeric"/>
+        <input class="otp-box" maxlength="1" id="otp2" inputmode="numeric"/>
+        <input class="otp-box" maxlength="1" id="otp3" inputmode="numeric"/>
+        <input class="otp-box" maxlength="1" id="otp4" inputmode="numeric"/>
+        <input class="otp-box" maxlength="1" id="otp5" inputmode="numeric"/>
+      </div>
+      <p class="otp-hint">Auto-advances to next box</p>
+      <button type="button" class="btn" id="verifyBtn">Verify & Continue</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="card hidden dashboard" id="dashboardView">
+      <div class="avatar" id="dashAvatar">?</div>
+      <h1>Welcome!</h1>
+      <p>You are securely authenticated</p>
+      <div class="profile">
+        <div class="profile-row"><span class="profile-label">User</span><span class="profile-value" id="dashUser">-</span></div>
+        <div class="profile-row"><span class="profile-label">Email</span><span class="profile-value" id="dashEmail">-</span></div>
+        <div class="profile-row"><div class="status-dot"></div><span style="font-size:13px;color:#22c55e;font-weight:600;">Session Active</span></div>
+      </div>
+      <button type="button" class="btn" id="logoutBtn">Sign Out</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+"use strict";
+
+console.log("APP STARTED - FINAL VERSION");
+
+function resolveApiBaseUrl() {
+  var host = window.location.hostname;
+  var port = window.location.port;
+  var protocol = window.location.protocol || "http:";
+
+  // If frontend is served by Django itself, use same-origin API.
+  if (port === "8000") return window.location.origin + "/api";
+
+  // For local dev servers, route API to Django backend.
+  if (host === "localhost" || host === "127.0.0.1") {
+    return protocol + "//" + host + ":8000/api";
+  }
+
+  // Safe fallback for local file preview / unknown host.
+  return "http://127.0.0.1:8000/api";
+}
+
+var BASE_URL = resolveApiBaseUrl();
+var pendingEmail = "";
+var otpPurpose = "";
+var appReady = false;
+var authFlowStarted = false;
+var activeView = "login";
+
+function saveOtpState() {
+  sessionStorage.setItem("pendingEmail", pendingEmail || "");
+  sessionStorage.setItem("otpPurpose", otpPurpose || "");
+}
+
+function clearOtpState() {
+  sessionStorage.removeItem("pendingEmail");
+  sessionStorage.removeItem("otpPurpose");
+}
+
+function restoreOtpState() {
+  var savedEmail = sessionStorage.getItem("pendingEmail") || "";
+  var savedPurpose = sessionStorage.getItem("otpPurpose") || "";
+  if (savedEmail && savedPurpose) {
+    pendingEmail = savedEmail;
+    otpPurpose = savedPurpose;
+    showOtp(savedPurpose === "register" ? "Verify Registration" : "Verify Login", savedEmail);
+    return true;
+  }
+  return false;
+}
+
+// ── GET ELEMENTS ────────────────────────────────────────────
+var registerView  = document.getElementById("registerView");
+var loginView     = document.getElementById("loginView");
+var otpView       = document.getElementById("otpView");
+var dashboardView = document.getElementById("dashboardView");
+
+function el(id) { return document.getElementById(id); }
+
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg, type) {
+  type = type || "info";
+  var old = document.querySelectorAll(".toast");
+  for (var i = 0; i < old.length; i++) old[i].remove();
+  var d = document.createElement("div");
+  d.className = "toast " + type;
+  d.innerHTML = '<span class="toast-dot"></span>' + msg;
+  document.body.appendChild(d);
+  setTimeout(function() { if (d.parentNode) d.remove(); }, 3500);
+}
+
+// ── CSRF ─────────────────────────────────────────────────────
+function getCookie(name) {
+  var cookies = document.cookie.split(";");
+  for (var i = 0; i < cookies.length; i++) {
+    var c = cookies[i].trim();
+    if (c.indexOf(name + "=") === 0) {
+      return decodeURIComponent(c.substring(name.length + 1));
+    }
+  }
+  return "";
+}
+
+// ── VIEWS ────────────────────────────────────────────────────
+function hideAll() {
+  registerView.classList.add("hidden");
+  loginView.classList.add("hidden");
+  otpView.classList.add("hidden");
+  dashboardView.classList.add("hidden");
+}
+
+function showRegister() {
+  console.log("showRegister called");
+  hideAll();
+  registerView.classList.remove("hidden");
+  activeView = "register";
+}
+
+function showLogin(force) {
+  console.log("showLogin called");
+  // If user is already in an OTP step, avoid accidental override
+  // from late async calls unless explicitly forced.
+  if (!force && otpPurpose) return;
+  hideAll();
+  loginView.classList.remove("hidden");
+  activeView = "login";
+}
+
+function showOtp(title, hint) {
+  console.log("showOtp called:", title, hint);
+  hideAll();
+  otpView.classList.remove("hidden");
+  activeView = "otp";
+  el("otpTitle").innerText = title;
+  el("otpText").innerHTML = "OTP sent to <strong>" + hint + "</strong>";
+  for (var i = 0; i < 6; i++) {
+    var b = el("otp" + i);
+    b.value = "";
+    b.classList.remove("filled");
+  }
+  setTimeout(function() { el("otp0").focus(); }, 150);
+}
+
+function showDashboard(user) {
+  console.log("showDashboard called:", user);
+  hideAll();
+  dashboardView.classList.remove("hidden");
+  activeView = "dashboard";
+  el("dashUser").innerText  = user.username || "-";
+  el("dashEmail").innerText = user.email    || "-";
+  el("dashAvatar").innerText = (user.username || "?")[0].toUpperCase();
+}
+
+// ── OTP BOXES ────────────────────────────────────────────────
+function wireOtpBoxes() {
+  var boxes = [];
+  for (var i = 0; i < 6; i++) boxes.push(el("otp" + i));
+
+  boxes.forEach(function(box, idx) {
+    box.addEventListener("keydown", function(e) {
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        if (box.value) { box.value = ""; box.classList.remove("filled"); }
+        else if (idx > 0) { boxes[idx-1].value = ""; boxes[idx-1].classList.remove("filled"); boxes[idx-1].focus(); }
+        return;
+      }
+      if (e.key === "ArrowLeft"  && idx > 0) { e.preventDefault(); boxes[idx-1].focus(); return; }
+      if (e.key === "ArrowRight" && idx < 5) { e.preventDefault(); boxes[idx+1].focus(); return; }
+      if (e.key === "Enter") { doVerifyOtp(); return; }
+      if (!/^[0-9]$/.test(e.key)) { e.preventDefault(); }
+    });
+    box.addEventListener("input", function() {
+      var v = box.value.replace(/\D/g, "");
+      box.value = v ? v[v.length-1] : "";
+      if (box.value) { box.classList.add("filled"); if (idx < 5) boxes[idx+1].focus(); }
+      else { box.classList.remove("filled"); }
+    });
+  });
+}
+
+// ── REGISTER ─────────────────────────────────────────────────
+function doRegister() {
+  console.log("doRegister fired");
+  authFlowStarted = true;
+  var username = el("regUsername").value.trim();
+  var email    = el("regEmail").value.trim();
+  var password = el("regPassword").value;
+
+  if (!username || !email || !password) {
+    showToast("All fields are required", "error");
+    return;
+  }
+
+  var btn = el("registerBtn");
+  btn.disabled = true;
+  btn.innerText = "Sending...";
+
+  fetch(BASE_URL + "/register/", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: username, email: email, password: password })
+  })
+  .then(function(res) {
+    return res.json().then(function(data) {
+      return { status: res.status, ok: res.ok, data: data };
+    });
+  })
+  .then(function(r) {
+    console.log("REGISTER:", r.status, r.data);
+    if (r.ok) {
+      pendingEmail = email;
+      otpPurpose = "register";
+      saveOtpState();
+      showToast("OTP sent to your email!", "success");
+      showOtp("Verify Registration", email);
+    } else {
+      showToast(r.data.error || r.data.message || "Registration failed", "error");
+    }
+  })
+  .catch(function(err) {
+    console.error("Register error:", err);
+    showToast("Cannot reach server", "error");
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.innerText = "Create Account";
+  });
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────
+function doLogin() {
+    console.log("doLogin fired");
+    authFlowStarted = true;
+    var username = el("loginUsername").value.trim();
+    var password = el("loginPassword").value.trim();
+    console.log("RAW username:", JSON.stringify(username));
+    console.log("RAW password length:", password.length);
+
+    if (!username) {
+    el("loginUsername").focus();
+    showToast("Please type your username", "error");
+    return;
+    }
+
+  console.log("username:", username, "| password length:", password.length);
+
+  if (!username || !password) {
+    showToast("Enter username and password", "error");
+    return;
+  }
+
+  var btn = el("loginBtn");
+  btn.disabled = true;
+  btn.innerText = "Sending...";
+
+  fetch(BASE_URL + "/login/", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ username: username, password: password })
+  })
+  .then(function(res) {
+    return res.text().then(function(text) {
+      var data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text || "" }; }
+      return { status: res.status, ok: res.ok, data: data };
+    });
+  })
+  .then(function(r) {
+    console.log("LOGIN:", r.status, r.data);
+    if (r.ok) {
+      pendingEmail = r.data.email || pendingEmail;
+      otpPurpose = "login";
+      saveOtpState();
+      showToast("OTP sent to your email!", "success");
+      showOtp("Verify Login", pendingEmail);
+    } else {
+      showToast(r.data.error || r.data.message || "Login failed", "error");
+    }
+  })
+  .catch(function(err) {
+    console.error("Login error:", err);
+    showToast("Cannot reach server", "error");
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.innerText = "Send OTP";
+  });
+}
+
+// ── VERIFY OTP ────────────────────────────────────────────────
+function doVerifyOtp() {
+  console.log("doVerifyOtp fired");
+  authFlowStarted = true;
+  var otp = "";
+  for (var i = 0; i < 6; i++) otp += el("otp" + i).value;
+
+  if (otp.length < 6) {
+    showToast("Enter all 6 digits", "error");
+    return;
+  }
+
+  var endpoint = otpPurpose === "register"
+    ? BASE_URL + "/register/verify/"
+    : BASE_URL + "/login/verify/";
+
+  var btn = el("verifyBtn");
+  btn.disabled = true;
+  btn.innerText = "Verifying...";
+
+  var savedUsername = otpPurpose === "register"
+    ? el("regUsername").value.trim()
+    : el("loginUsername").value.trim();
+
+  fetch(endpoint, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ email: pendingEmail, otp: otp })
+  })
+  .then(function(res) {
+    return res.json().then(function(data) {
+      return { status: res.status, ok: res.ok, data: data };
+    });
+  })
+  .then(function(r) {
+    console.log("VERIFY OTP:", r.status, r.data);
+    if (r.ok) {
+      clearOtpState();
+      showToast("Verified! Welcome!", "success");
+      // Show dashboard immediately with what we know
+      // then try to get full data from /me/
+      showDashboard({ username: savedUsername, email: pendingEmail });
+      // Try /me/ in background after delay
+      setTimeout(function() {
+        fetch(BASE_URL + "/me/", { credentials: "include" })
+        .then(function(res) {
+          console.log("ME after verify:", res.status);
+          if (res.ok) {
+            return res.json().then(function(user) {
+              showDashboard(user);
+            });
+          }
+        })
+        .catch(function(e) { console.warn("ME failed:", e); });
+      }, 1000);
+    } else {
+      showToast(r.data.error || r.data.message || "Invalid OTP", "error");
+    }
+  })
+  .catch(function(err) {
+    console.error("Verify error:", err);
+    showToast("Cannot reach server", "error");
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.innerText = "Verify & Continue";
+  });
+}
+
+// ── LOGOUT ────────────────────────────────────────────────────
+function doLogout() {
+  console.log("doLogout fired");
+  fetch(BASE_URL + "/logout/", {
+    method: "POST",
+    credentials: "include",
+    headers: { "X-CSRFToken": getCookie("csrftoken") }
+  })
+  .then(function() {
+    clearOtpState();
+    pendingEmail = "";
+    otpPurpose = "";
+    showLogin(true);
+    showToast("Signed out successfully", "info");
+  })
+  .catch(function(err) {
+    console.error("Logout error:", err);
+    pendingEmail = "";
+    otpPurpose = "";
+    showLogin(true);
+  });
+}
+
+// ── BIND BUTTONS ─────────────────────────────────────────────
+el("registerBtn").addEventListener("click", doRegister);
+el("loginBtn").addEventListener("click", doLogin);
+el("verifyBtn").addEventListener("click", doVerifyOtp);
+el("logoutBtn").addEventListener("click", doLogout);
+el("goLogin").addEventListener("click", showLogin);
+el("goRegister").addEventListener("click", showRegister);
+
+console.log("Buttons bound successfully");
+
+// ── INIT: check if already logged in ─────────────────────────
+fetch(BASE_URL + "/session/", { credentials: "include" })
+.then(function(res) {
+  return res.json().then(function(data) {
+    console.log("SESSION on load:", data);
+    if (restoreOtpState()) return;
+    if (data && data.authenticated && data.user) {
+      showDashboard(data.user);
+    } else if (!authFlowStarted && activeView !== "otp") {
+      showLogin();
+    }
+  });
+})
+.catch(function(err) {
+  console.error("Init error:", err);
+  if (!authFlowStarted && activeView !== "otp") showLogin();
+});
+
+// Wire OTP boxes
+wireOtpBoxes();
+
+</script>
+</body>
+</html>
