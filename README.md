@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔐 SecureAuth — Django OTP Authentication API
+#  SecureAuth — Django OTP Authentication API
 
 **A production-ready authentication system built with Django REST Framework**  
 *Session-based auth · OTP verification · CSRF protection · Swagger docs*
@@ -15,7 +15,7 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Overview](#-overview)
 - [Authentication Flow](#-authentication-flow)
@@ -31,13 +31,13 @@
 
 ---
 
-## 🧭 Overview
+##  Overview
 
 SecureAuth is a secure, session-based user authentication REST API built with Django and Django REST Framework. It implements a full OTP (One-Time Password) verification flow — users register, verify their email with a 6-digit OTP, and then authenticate using session cookies. No JWT tokens are used; security is enforced through Django's built-in CSRF and session middleware.
 
 ---
 
-## 🔄 Authentication Flow
+##  Authentication Flow
 
 ```mermaid
 flowchart TD
@@ -62,7 +62,7 @@ flowchart TD
     O --> P[GET /api/me/\nAccess protected routes]
     P --> Q[POST /api/logout/]
     Q --> R[Destroy session\n& remove cookies]
-    R --> S([✅ Logged out])
+    R --> S([ Logged out])
 
     style A fill:#1e3a5f,color:#fff,stroke:#2d5986
     style S fill:#1a4731,color:#fff,stroke:#27704a
@@ -80,18 +80,18 @@ flowchart TD
 
 | Feature | Description |
 |---|---|
-| 🔑 User Registration | Create accounts with username, email, and password |
-| 📧 OTP Verification | 6-digit OTP sent to email for account activation |
-| 🔐 Login with OTP | Two-factor login flow using email OTP |
-| 🍪 Session Authentication | Secure cookie-based sessions via Django |
-| 🛡️ CSRF Protection | Built-in Django CSRF middleware enabled |
-| 👤 Protected Endpoints | `/me/` route requires active session |
-| 🚪 Logout | Full session destruction and cookie cleanup |
-| 📄 Swagger Docs | Interactive API documentation via drf-yasg |
+|  User Registration | Create accounts with username, email, and password |
+|  OTP Verification | 6-digit OTP sent to email for account activation |
+|  Login with OTP | Two-factor login flow using email OTP |
+|  Session Authentication | Secure cookie-based sessions via Django |
+|  CSRF Protection | Built-in Django CSRF middleware enabled |
+|  Protected Endpoints | `/me/` route requires active session |
+|  Logout | Full session destruction and cookie cleanup |
+|  Swagger Docs | Interactive API documentation via drf-yasg |
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -105,7 +105,7 @@ flowchart TD
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 django-auth-system/
@@ -123,6 +123,7 @@ django-auth-system/
 │   ├── settings.py          # Django project settings
 │   └── urls.py              # Root URL configuration
 │
+├── index.html               # Frontend
 ├── requirements.txt         # Python dependencies
 ├── manage.py                # Django CLI entry point
 └── README.md
@@ -130,7 +131,7 @@ django-auth-system/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -141,7 +142,7 @@ django-auth-system/
 ### 1. Clone the repository
 
 ```bash
-git clone <your-github-repository-link>
+git clone <https://github.com/Kaki-bhargav-ram/django-auth-system>
 cd django-auth-system
 ```
 
@@ -187,7 +188,7 @@ http://127.0.0.1:8000/swagger/
 
 ---
 
-## 📡 API Reference
+##  API Reference
 
 ### Register User
 
@@ -293,7 +294,7 @@ POST /api/logout/
 
 ---
 
-## 🛡️ Security
+## Security
 
 This project implements multiple layers of security:
 
@@ -306,7 +307,7 @@ This project implements multiple layers of security:
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 The API can be tested using:
 
@@ -316,7 +317,7 @@ The API can be tested using:
 
 ---
 
-## 🗺️ Roadmap
+##  Roadmap
 
 - [ ] Real SMTP email delivery with OTP
 - [ ] OTP expiry (time-based invalidation)
@@ -328,11 +329,10 @@ The API can be tested using:
 
 ---
 
-## 👨‍💻 Author
+##  Author
 
-**Bhargav Ram**
+**Kaki Bhargav Ram**
 
-> Built for technical assessment and educational purposes.
 
 ---
 
