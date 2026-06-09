@@ -21,13 +21,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8cjpl@1)u*rfjm!&fd9vu83)mbchlw8d02bnd9syfr_v_6&p+-'
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"   
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    ".vercel.app",
+    "localhost",
+    "127.0.0.1",
+]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.vercel.app",
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
@@ -48,6 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
 
@@ -116,8 +126,13 @@ USE_TZ = True
 
 
 # Static files
-STATIC_URL = 'static/'
-
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
@@ -128,11 +143,11 @@ REST_FRAMEWORK = {}
 # ─── SESSION & COOKIE SETTINGS ────────────────────────────
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = None
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = True
 
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = None
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = True
 
 # ─── EMAIL SETTINGS ───────────────────────────────────────
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -157,6 +172,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",
     r"^http://127\.0\.0\.1:\d+$",
+    r"^https://.*\.vercel\.app$",
 ]
 
 
@@ -164,4 +180,5 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 CSRF_TRUSTED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",
     r"^http://127\.0\.0\.1:\d+$",
+    r"^https://.*\.vercel\.app$",
 ]

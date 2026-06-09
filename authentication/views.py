@@ -286,12 +286,7 @@ def me(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def session_status(request):
-    """
-    Frontend-friendly auth status endpoint.
-    Always returns 200 so initial app load does not look like an error
-    in browser devtools when user is simply logged out.
-    """
-
+    
     if request.user.is_authenticated:
         return Response({
             "authenticated": True,
